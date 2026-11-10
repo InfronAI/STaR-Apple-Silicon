@@ -1,0 +1,52 @@
+{
+  "source": "docs/experiments/2026-11-10-e2e/terminal.cast",
+  "source_seconds": 620.319273,
+  "video_seconds": 82.16666666666667,
+  "speed": 5.0,
+  "maximum_idle_gap_seconds": 2.0,
+  "minimum_stage_seconds": 3.0,
+  "events": 176,
+  "resolution": [
+    1600,
+    1000
+  ],
+  "fps": 12,
+  "audio": false,
+  "note": "All recorded output events retained in order. Timing compressed; long idle gaps shortened; each stage held for at least 3 seconds for readability. Project path prefix removed during capture.",
+  "preview": {
+    "file": "star-e2e-preview.gif",
+    "frames": 164,
+    "resolution": [
+      800,
+      500
+    ],
+    "duration_seconds": 41.0,
+    "speed_relative_to_mp4": 2.0
+  },
+  "encoding": {
+    "codec": "H.264",
+    "pixel_format": "yuv420p",
+    "pillow": "12.3.0",
+    "ffmpeg": "ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers"
+  },
+  "source_sha256": "7fe759452815c27c197485f87c5d6223e1fb450d0eadd35a6cc22173b5e575ac",
+  "renderer_sha256": "27f333fdadd09e948f8053e8f4e5327c3cc3e4ebabc16982f551826da639a17d",
+  "assets": {
+    "star-e2e-demo-midpoint.png": {
+      "bytes": 134138,
+      "sha256": "9e571cef911dba6edf7b1fcf838b7aa2da7d9cfcd060e2427e923120a1680f36"
+    },
+    "star-e2e-demo-poster.png": {
+      "bytes": 90447,
+      "sha256": "6aa8cd01e54af7aee44eaf309007f81358601f60039055ce5cbbe6b615caa9bc"
+    },
+    "star-e2e-demo.mp4": {
+      "bytes": 1354410,
+      "sha256": "659615b58904c18942a519c7b20bcef132ddc8cacbefb542864ba334b9a05cdf"
+    },
+    "star-e2e-preview.gif": {
+      "bytes": 676919,
+      "sha256": "2b999e0ec5075ae3e5c6c50363892ec285cc2c415951fa60ae1b277ec7825880"
+    }
+  }
+}

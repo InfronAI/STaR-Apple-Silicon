@@ -1,0 +1,206 @@
+[
+  {
+    "number": 1,
+    "title": "Environment and MPS execution",
+    "start": 0.00040404079481959343,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "doctor",
+          "--device",
+          "mps"
+        ],
+        "exit_code": 0,
+        "seconds": 2.9213870419189334,
+        "log": "01-doctor.log"
+      }
+    ],
+    "seconds": 2.9266603752039373
+  },
+  {
+    "number": 2,
+    "title": "Tests and dependency consistency",
+    "start": 2.927064415998757,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "exit_code": 0,
+        "seconds": 4.058845791965723,
+        "log": "02-tests.log"
+      },
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exit_code": 0,
+        "seconds": 0.2211879170499742,
+        "log": "02-dependencies.log"
+      }
+    ],
+    "seconds": 4.282594208838418
+  },
+  {
+    "number": 3,
+    "title": "Controlled GPT-J branch coverage (synthetic fixture)",
+    "start": 7.209658624837175,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "smoke",
+          "--device",
+          "mps",
+          "--output-dir",
+          "runs/e2e-2026-11-10/fixture"
+        ],
+        "exit_code": 0,
+        "seconds": 12.07460099994205,
+        "log": "03-fixture.log"
+      }
+    ],
+    "seconds": 12.075998208019882
+  },
+  {
+    "number": 4,
+    "title": "Untrained GPT-2 baseline on the held-out dev subset",
+    "start": 19.285656832857057,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "evaluate",
+          "--config",
+          "runs/e2e-2026-11-10/config.json",
+          "--output-dir",
+          "runs/e2e-2026-11-10/baseline"
+        ],
+        "exit_code": 0,
+        "seconds": 51.68399000004865,
+        "log": "04-baseline.log"
+      }
+    ],
+    "seconds": 51.68555300007574
+  },
+  {
+    "number": 5,
+    "title": "Two complete STaR rounds on original CommonsenseQA",
+    "start": 70.9712098329328,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "run",
+          "--config",
+          "runs/e2e-2026-11-10/config.json"
+        ],
+        "exit_code": 0,
+        "seconds": 483.61599299986847,
+        "log": "05-star.log"
+      }
+    ],
+    "seconds": 483.9048794170376
+  },
+  {
+    "number": 6,
+    "title": "Reload the final checkpoint and independently evaluate",
+    "start": 554.8760892499704,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "evaluate",
+          "--config",
+          "runs/e2e-2026-11-10/config.json",
+          "--model",
+          "runs/e2e-2026-11-10/run/iteration_0002/model",
+          "--output-dir",
+          "runs/e2e-2026-11-10/reload"
+        ],
+        "exit_code": 0,
+        "seconds": 53.668602166930214,
+        "log": "06-reload.log"
+      }
+    ],
+    "seconds": 53.671710040885955
+  },
+  {
+    "number": 7,
+    "title": "Generate from the saved checkpoint",
+    "start": 608.5477992908563,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "generate",
+          "--config",
+          "runs/e2e-2026-11-10/config.json",
+          "--model",
+          "runs/e2e-2026-11-10/run/iteration_0002/model",
+          "--prompt",
+          "Q: A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?\nAnswer Choices:\n(a) bank\n(b) library\n(c) department store\n(d) mall\n(e) new york\nA:"
+        ],
+        "exit_code": 0,
+        "seconds": 6.802368834149092,
+        "log": "07-generate.log"
+      }
+    ],
+    "seconds": 6.817754250019789
+  },
+  {
+    "number": 8,
+    "title": "Resume without retraining or changing committed artifacts",
+    "start": 615.3655535408761,
+    "commands": [
+      {
+        "argv": [
+          ".venv/bin/python",
+          "-m",
+          "star",
+          "run",
+          "--config",
+          "runs/e2e-2026-11-10/config.json",
+          "--resume"
+        ],
+        "exit_code": 0,
+        "seconds": 2.6007351248990744,
+        "log": "08-resume.log"
+      }
+    ],
+    "seconds": 3.393771959003061
+  },
+  {
+    "number": 9,
+    "title": "Independent artifact audit",
+    "start": 618.7593254998792,
+    "commands": [],
+    "seconds": 1.5598614159971476
+  },
+  {
+    "number": 10,
+    "title": "Results and scope",
+    "start": 620.3191869158763,
+    "commands": [],
+    "seconds": 9.53341368585825e-05
+  }
+]

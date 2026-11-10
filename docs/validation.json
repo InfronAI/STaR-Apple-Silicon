@@ -1,0 +1,210 @@
+{
+  "date": "2026-11-10",
+  "hardware": {
+    "python": "3.11.16",
+    "machine": "arm64",
+    "macos": "26.6.1",
+    "torch": "2.8.0",
+    "transformers": "4.51.3",
+    "mps_built": true,
+    "mps_available": true,
+    "device": "mps",
+    "memory_gib": 16.0,
+    "forward_backward": "passed"
+  },
+  "upstream_commit": "6ffd3c4743da6c7a7369834c434359d9f7e0ac38",
+  "tests": {
+    "passed": 33,
+    "command": "python -m pytest -q",
+    "mps_test_executed": true
+  },
+  "checks": [
+    "setup_mac.sh",
+    "pip check",
+    "ruff check",
+    "ruff format --check",
+    "wheel build",
+    "git diff --check",
+    "standalone train CLI",
+    "standalone evaluate CLI with a saved checkpoint"
+  ],
+  "smoke": {
+    "mps": {
+      "status": "passed",
+      "device": "mps",
+      "fixture_only": true,
+      "iterations": 2,
+      "rationalization_checked": true,
+      "resume_checked": true,
+      "model": "runs/smoke-mps-verified/run/iteration_0002/model"
+    },
+    "cpu": {
+      "status": "passed",
+      "device": "cpu",
+      "fixture_only": true,
+      "iterations": 2,
+      "rationalization_checked": true,
+      "resume_checked": true,
+      "model": "runs/smoke-cpu/run/iteration_0002/model"
+    }
+  },
+  "real_model": {
+    "config": {
+      "model": "openai-community/gpt2",
+      "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+      "data_root": "datasets",
+      "output_dir": "runs/final-validation",
+      "task": "commonsenseqa",
+      "train_file": null,
+      "eval_file": null,
+      "device": "mps",
+      "local_files_only": true,
+      "seed": 42,
+      "iterations": 2,
+      "train_samples": 6,
+      "eval_samples": 2,
+      "few_shot": 3,
+      "few_shot_train": false,
+      "direct": false,
+      "rationalize": true,
+      "rationalization_probability": 1.0,
+      "max_seq_length": 512,
+      "max_new_tokens": 96,
+      "generation_batch_size": 1,
+      "temperature": 0.0,
+      "top_p": 0.9,
+      "batch_size": 1,
+      "gradient_accumulation_steps": 1,
+      "gradient_checkpointing": true,
+      "learning_rate": 1e-05,
+      "weight_decay": 0.0,
+      "max_grad_norm": 1.0,
+      "epochs": 1.0,
+      "add_epochs": 0.2,
+      "max_steps": 1,
+      "add_steps": 0,
+      "loss_mask": "completion",
+      "z_loss": 0.0001
+    },
+    "summary": {
+      "iterations": 2,
+      "trained_iterations": 2,
+      "model": "runs/final-validation/iteration_0002/model",
+      "history": [
+        {
+          "iteration": 1,
+          "generation_model": "runs/final-validation/base_model",
+          "training_base": "runs/final-validation/base_model",
+          "generation": {
+            "total": 6,
+            "correct": 1,
+            "rationalization_attempted": 5,
+            "rationalization_correct": 0,
+            "accuracy": 0.16666666666666666,
+            "accepted": 1
+          },
+          "training": {
+            "optimizer_steps": 1,
+            "examples": 1,
+            "dropped_overlength": 0,
+            "examples_seen": 1,
+            "target_tokens": 34,
+            "initial_loss": 3.2069499492645264,
+            "final_loss": 3.2069499492645264,
+            "mean_loss": 3.2069499492645264,
+            "seconds": 0.9298221250064671,
+            "loss_mask": "completion"
+          },
+          "status": "trained",
+          "model_files": {
+            "config.json": "4373f7c7a4f534fc42351e34c8f0c528790305e59dda8696ab7c21e4f2a1902c",
+            "generation_config.json": "2258b3a1afa11b5a2735a0fe2364b161873717834b23872ed16fb99456f5a63e",
+            "merges.txt": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+            "model.safetensors": "efe06e99457eb38e4647c4b2881fcc3bd344cf62ad2c43339533214b503dde67",
+            "special_tokens_map.json": "4361691d6df1a704c4bc0d73b2974725bf6cfbb3bdc70c95b16fcbad43a5b1f4",
+            "tokenizer.json": "1fe93b6152957cf9cfd6d89002467f789ce8b3f3e000b3a2edf27c808ddd0b9e",
+            "tokenizer_config.json": "d0e99e3da75fd15dd9a9747896f860100a13ef7e92cc9689b63d43f18652b24f",
+            "vocab.json": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+          },
+          "evaluation": {
+            "total": 2,
+            "correct": 0,
+            "rationalization_attempted": 0,
+            "rationalization_correct": 0,
+            "accuracy": 0.0,
+            "accepted": 0
+          }
+        },
+        {
+          "iteration": 2,
+          "generation_model": "runs/final-validation/iteration_0001/model",
+          "training_base": "runs/final-validation/base_model",
+          "generation": {
+            "total": 6,
+            "correct": 2,
+            "rationalization_attempted": 4,
+            "rationalization_correct": 0,
+            "accuracy": 0.3333333333333333,
+            "accepted": 2
+          },
+          "training": {
+            "optimizer_steps": 1,
+            "examples": 2,
+            "dropped_overlength": 0,
+            "examples_seen": 1,
+            "target_tokens": 35,
+            "initial_loss": 3.6614952087402344,
+            "final_loss": 3.6614952087402344,
+            "mean_loss": 3.6614952087402344,
+            "seconds": 0.798256624955684,
+            "loss_mask": "completion"
+          },
+          "status": "trained",
+          "model_files": {
+            "config.json": "4373f7c7a4f534fc42351e34c8f0c528790305e59dda8696ab7c21e4f2a1902c",
+            "generation_config.json": "2258b3a1afa11b5a2735a0fe2364b161873717834b23872ed16fb99456f5a63e",
+            "merges.txt": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+            "model.safetensors": "de91fbe90c6532f698f02ff2a1ff3323a3731719bfefccca961da49823709708",
+            "special_tokens_map.json": "4361691d6df1a704c4bc0d73b2974725bf6cfbb3bdc70c95b16fcbad43a5b1f4",
+            "tokenizer.json": "1fe93b6152957cf9cfd6d89002467f789ce8b3f3e000b3a2edf27c808ddd0b9e",
+            "tokenizer_config.json": "d0e99e3da75fd15dd9a9747896f860100a13ef7e92cc9689b63d43f18652b24f",
+            "vocab.json": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+          },
+          "evaluation": {
+            "total": 2,
+            "correct": 0,
+            "rationalization_attempted": 0,
+            "rationalization_correct": 0,
+            "accuracy": 0.0,
+            "accepted": 0
+          }
+        }
+      ]
+    }
+  },
+  "task_evaluation": {
+    "gsm": {
+      "total": 2,
+      "correct": 0,
+      "rationalization_attempted": 0,
+      "rationalization_correct": 0,
+      "accuracy": 0.0,
+      "accepted": 0
+    },
+    "arithmetic": {
+      "total": 2,
+      "correct": 0,
+      "rationalization_attempted": 0,
+      "rationalization_correct": 0,
+      "accuracy": 0.0,
+      "accepted": 0
+    }
+  },
+  "unchanged_migrated_files": 12,
+  "arithmetic_generation": {
+    "train_count": 40,
+    "eval_count": 10,
+    "max_digits": 2,
+    "seed": 42
+  }
+}

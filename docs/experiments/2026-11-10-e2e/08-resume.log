@@ -1,0 +1,5 @@
+{
+  "iterations": 2,
+  "trained_iterations": 2,
+  "model": "runs/e2e-2026-11-10/run/iteration_0002/model"
+}

@@ -1,0 +1,15 @@
+{
+  "model": "openai-community/gpt2",
+  "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "task": "commonsenseqa",
+  "data_root": "../datasets",
+  "output_dir": "../runs/commonsenseqa",
+  "device": "auto",
+  "iterations": 2,
+  "train_samples": 32,
+  "eval_samples": 16,
+  "few_shot": 3,
+  "rationalize": true,
+  "max_seq_length": 512,
+  "max_new_tokens": 96
+}

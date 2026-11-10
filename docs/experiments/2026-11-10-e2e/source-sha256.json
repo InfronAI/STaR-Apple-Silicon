@@ -1,0 +1,16 @@
+{
+  "src/star/backend.py": "e54b1a8c352dd151e6114d4c47ca7c9b577c9bb0b4f4feb219bf868549b51528",
+  "src/star/config.py": "0133cecd96ae90673ca663cdb5eb0efc303233b5e3376e1e2b3068c223c2d0d5",
+  "src/star/__init__.py": "145f7c8a9e9f215a3ecd3fcfab1922e157038c2d80bbe17dd361a3f6bebe4239",
+  "src/star/cli.py": "28d7b9a667522372e6e03e32b829b5004a072b48c74c053a191aaf819e220d32",
+  "src/star/pipeline.py": "c2b6ff48ea74fab045cb400e68e5b8276fb12af6ff745ccf9f14132b5d038e97",
+  "src/star/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+  "src/star/data.py": "3c7936cda499fc2d3903589d38a393988a293492854982300dc138f5e0cdc35e",
+  "src/star/smoke.py": "2f705794d5eebe4b804e001c37c3d2eb77de19102864375acc9813f4561c9f21",
+  "tests/test_backend.py": "0ae24fff6a61be3f5c8dd9f1abb276745911e1bcd1bb17fe75aba01a2240d579",
+  "tests/test_data.py": "6e928f94965ca45d72131b8d1dfff8bb25b10dd4fe97164e20258e69fe7bd5d4",
+  "tests/test_pipeline.py": "73acef63b769600ac325d5acedbfc546bd3f53f9996dbb285ebfad418168c964",
+  "scripts/run_e2e.py": "2ad54ac7689d8af57313e0859182bfa423c8b232176c3f74165b9d54c1507295",
+  "pyproject.toml": "33a64909a7ac3377199ede9b0e7158242617c7f3329f5007acb7a38d5f1f1771",
+  "requirements.lock": "aa909b1cfad539d44319f9fdd34a080e930d952e2dded9a8ebad95c8e44c5e71"
+}

@@ -1,0 +1,44 @@
+{
+  "iteration": 2,
+  "generation_model": "runs/e2e-2026-11-10/run/iteration_0001/model",
+  "training_base": "runs/e2e-2026-11-10/run/base_model",
+  "generation": {
+    "total": 32,
+    "correct": 6,
+    "rationalization_attempted": 26,
+    "rationalization_correct": 0,
+    "accuracy": 0.1875,
+    "accepted": 6
+  },
+  "training": {
+    "optimizer_steps": 2,
+    "examples": 6,
+    "dropped_overlength": 0,
+    "examples_seen": 8,
+    "target_tokens": 273,
+    "initial_loss": 3.4265884160995483,
+    "final_loss": 3.4778375029563904,
+    "mean_loss": 3.4522129595279694,
+    "seconds": 2.0568432500585914,
+    "loss_mask": "completion"
+  },
+  "status": "trained",
+  "model_files": {
+    "config.json": "4373f7c7a4f534fc42351e34c8f0c528790305e59dda8696ab7c21e4f2a1902c",
+    "generation_config.json": "2258b3a1afa11b5a2735a0fe2364b161873717834b23872ed16fb99456f5a63e",
+    "merges.txt": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+    "model.safetensors": "bc5bf8f7116d658f2469b6f886d9618952dd906591bd4e8920b0e8910d1424a5",
+    "special_tokens_map.json": "4361691d6df1a704c4bc0d73b2974725bf6cfbb3bdc70c95b16fcbad43a5b1f4",
+    "tokenizer.json": "1fe93b6152957cf9cfd6d89002467f789ce8b3f3e000b3a2edf27c808ddd0b9e",
+    "tokenizer_config.json": "d0e99e3da75fd15dd9a9747896f860100a13ef7e92cc9689b63d43f18652b24f",
+    "vocab.json": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+  },
+  "evaluation": {
+    "total": 16,
+    "correct": 3,
+    "rationalization_attempted": 0,
+    "rationalization_correct": 0,
+    "accuracy": 0.1875,
+    "accepted": 3
+  }
+}

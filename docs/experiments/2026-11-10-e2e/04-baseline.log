@@ -1,0 +1,11 @@
+  generate 1/16: correct=0
+  generate 10/16: correct=2
+  generate 16/16: correct=4
+{
+  "total": 16,
+  "correct": 4,
+  "rationalization_attempted": 0,
+  "rationalization_correct": 0,
+  "accuracy": 0.25,
+  "accepted": 4
+}

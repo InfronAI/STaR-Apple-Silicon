@@ -1,0 +1,13 @@
+{
+  "model": "openai-community/gpt2",
+  "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "task": "gsm",
+  "data_root": "../datasets",
+  "output_dir": "../runs/gsm",
+  "device": "auto",
+  "train_samples": 16,
+  "eval_samples": 8,
+  "few_shot": 2,
+  "max_seq_length": 768,
+  "max_new_tokens": 192
+}

@@ -1,0 +1,13 @@
+{
+  "model": "openai-community/gpt2",
+  "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "task": "arithmetic",
+  "data_root": "../datasets",
+  "output_dir": "../runs/arithmetic",
+  "device": "auto",
+  "train_samples": 16,
+  "eval_samples": 8,
+  "few_shot": 3,
+  "max_seq_length": 512,
+  "max_new_tokens": 128
+}

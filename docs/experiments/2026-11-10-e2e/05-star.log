@@ -1,0 +1,38 @@
+Saving immutable base model: openai-community/gpt2
+Iteration 1/2: generating from runs/e2e-2026-11-10/run/base_model
+  generate 1/32: correct=0
+  generate 10/32: correct=2
+  generate 20/32: correct=5
+  generate 30/32: correct=5
+  generate 32/32: correct=5
+  rationalize 1/27: recovered=0
+  rationalize 10/27: recovered=0
+  rationalize 20/27: recovered=0
+  rationalize 27/27: recovered=0
+  retraining base model on 5 accepted examples
+  train 1/2: loss=3.52236
+  train 2/2: loss=2.99214
+  generate 1/16: correct=0
+  generate 10/16: correct=2
+  generate 16/16: correct=4
+Iteration 2/2: generating from runs/e2e-2026-11-10/run/iteration_0001/model
+  generate 1/32: correct=0
+  generate 10/32: correct=3
+  generate 20/32: correct=6
+  generate 30/32: correct=6
+  generate 32/32: correct=6
+  rationalize 1/26: recovered=0
+  rationalize 10/26: recovered=0
+  rationalize 20/26: recovered=0
+  rationalize 26/26: recovered=0
+  retraining base model on 6 accepted examples
+  train 1/2: loss=3.42659
+  train 2/2: loss=3.47784
+  generate 1/16: correct=0
+  generate 10/16: correct=2
+  generate 16/16: correct=3
+{
+  "iterations": 2,
+  "trained_iterations": 2,
+  "model": "runs/e2e-2026-11-10/run/iteration_0002/model"
+}

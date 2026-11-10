@@ -1,220 +1,183 @@
-# Table of contents
-1. [STaR](#star)
-2. [Mesh Transformer JAX](#mesh-transformer-jax)
-    1. [Updates](#updates)
-3. [Pretrained Models](#pretrained-models)
-   1. [GPT-J-6B](#gpt-j-6b)
-      1. [Links](#links)
-      2. [Acknowledgments](#acknowledgments)
-      3. [License](#license)
-      4. [Model Details](#model-details)
-      5. [Zero-Shot Evaluations](#zero-shot-evaluations)
-4. [Architecture and Usage](#architecture-and-usage)
-   1. [Fine-tuning](#fine-tuning)
-   2. [JAX Dependency](#jax-dependency)
-5. [TODO](#todo)
+# STaR · Apple Silicon
 
-# STaR
-Code for [STaR: Bootstrapping Reasoning With Reasoning (NeurIPS 2022)](https://openreview.net/forum?id=_3ELRdg2sgI). This library is built on top of [mesh-transformer-jax](https://github.com/kingoflolz/mesh-transformer-jax) and incorporates masked training from [this repo](https://github.com/albertqjiang/mesh-transformer-jax). In order to run it, launch `iteration_train.py` with any desired arguments. The README is left mostly unchanged, as `iteration_train` largely wraps around `device_train.py`, `device_inference.py`, and `create_finetune_tfrecords.py`.
+**English** · [简体中文](README.zh-CN.md)
 
-# Mesh Transformer JAX
+A local implementation of [STaR: Bootstrapping Reasoning With Reasoning](https://arxiv.org/abs/2203.14465), with **MPS GPU training and inference on Apple Silicon** and a CPU fallback. It preserves the central loop: generate rationales, keep answers that are correct, retry failed questions with an answer hint, remove that hint from the training input, and fine-tune a fresh copy of the original base model each round.
 
-A haiku library using the `xmap`/`pjit` operators in JAX for model parallelism of transformers.
+The default model is **GPT-2 124M**, with full-parameter fine-tuning. The complete workflow has been tested on a **16 GB M1 Pro**. This is an engineering adaptation, not a reproduction of GPT-J-6B scale or the paper's accuracy. GPT-J-6B's float32 weights, gradients, and Adam states alone require roughly 96 GB. See the [architecture and migration notes](docs/architecture.md) for differences from upstream commit `6ffd3c4`.
 
-The parallelism scheme is similar to the [original Megatron-LM](https://arxiv.org/abs/1909.08053), which is efficient
-on TPUs due to the high speed 2d mesh network. There is also an experimental model version which implements [ZeRo style
-sharding](https://arxiv.org/abs/1910.02054).
+## Recorded demo
 
-This library is designed for scalability up to approximately 40B parameters on TPUv3s, beyond which different
-parallelism strategies should be used. See other implementations such as
-[GPT-NeoX](https://github.com/EleutherAI/gpt-neox) or [DeepSpeed](https://github.com/microsoft/DeepSpeed) for that.
+[![Watch the recorded STaR end-to-end experiment](docs/media/star-e2e-preview.gif)](docs/media/star-e2e-demo.mp4)
 
-One future direction for research is integrating this codebase with
-[swarm-jax](https://github.com/kingoflolz/swarm-jax), to achieve further scalability with pipeline parallelism.
+**[Watch / download the MP4](docs/media/star-e2e-demo.mp4)** · [Experiment report](docs/experiments/2026-11-10-e2e/report.md) · [中文报告](docs/experiments/2026-11-10-e2e/report.zh-CN.md) · [Original terminal recording](docs/experiments/2026-11-10-e2e/terminal.cast)
 
-## Updates
+The 82-second video is rendered from timestamped terminal output captured during the actual experiment. Playback is accelerated and long idle gaps are shortened; the recorded elapsed clock remains visible. The animated preview above plays at twice the MP4 speed; click it to open the full video. Machine-specific project paths are normalized. The MP4 link works independently of whether your Markdown viewer supports embedded video.
 
-**12-07-21**: Added [guide to fine tuning](howto_finetune.md)
+The experiment uses the default **32 training questions, 16 held-out validation questions, and two full epoch-based STaR rounds**, followed by independent checkpoint evaluation, inference, resume, and artifact audits. A separately labeled synthetic GPT-J fixture checks the successful rationalization branch. Its results are not included in the real model's accuracy.
 
-# Pretrained Models
+**Recorded result:** 33 tests and 17 artifact checks passed. Held-out accuracy was **4/16 (25%) before training and 3/16 (18.75%) after round two**. The run validates the workflow; it did not improve accuracy on this small subset. See the report for all per-round results and limitations.
 
-## GPT-J-6B
+## Install
 
-A 6 billion parameter, autoregressive text generation model trained on [The Pile](https://pile.eleuther.ai/).
+Use **macOS 14+, native arm64 Python 3.11 or 3.12**; Python 3.11 is recommended. Dependencies and pretrained weights need network access on their first download. No API key, cloud account, W&B account, or remote GPU is required.
 
-### Links
+```bash
+# If a suitable Python version is not installed
+brew install python@3.11
 
-[Slim weights (bf16 weights only, for inference, 9GB)](https://the-eye.eu/public/AI/GPT-J-6B/step_383500_slim.tar.zstd)
-
-[Full weights (including optimizer params, 61GB)](https://the-eye.eu/public/AI/GPT-J-6B/step_383500.tar.zstd)
-
-[Colab demo](http://colab.research.google.com/github/kingoflolz/mesh-transformer-jax/blob/master/colab_demo.ipynb)
-
-[Web demo](https://6b.eleuther.ai/)
-
-[Aran's blog post](https://arankomatsuzaki.wordpress.com/2021/06/04/gpt-j/)
-
-### Acknowledgments
-
-This project would not have been possible without compute generously provided by the
-[TPU Research Cloud](https://sites.research.google/trc/) with assistance from [EleutherAI](https://eleuther.ai/).
-
-Thanks to the Cloud TPU team at Google for providing early access to the Cloud TPU VM alpha
-([now publicly available!](https://cloud.google.com/blog/products/compute/introducing-cloud-tpu-vms))
-
-Thanks to everyone who have helped out one way or another (listed alphabetically):
-- [Aran Komatsuzaki](https://twitter.com/arankomatsuzaki) for advice with experiment design and writing the blog posts.
-- [James Bradbury](https://twitter.com/jekbradbury) for valuable assistance with debugging JAX issues.
-- [Janko Prester](https://github.com/jprester) for creating the web demo frontend.
-- [Laurence Golding](https://github.com/researcher2) for adding some features to the web demo.
-- [Leo Gao](https://twitter.com/nabla_theta) for running zero shot evaluations for the baseline models for the table.
-
-### License
-The weights of GPT-J-6B are licensed under version 2.0 of the Apache License.
-
-### Model Details
-
-| Hyperparameter    | Value  |
-|-------------------|--------|
-| n_parameters      | 6,053,381,344 |
-| n_layers          | 28*    |
-| d_model           | 4,096  |
-| d_ff              | 16,384 |
-| n_heads           | 16     |
-| d_head            | 256    |
-| n_ctx             | 2,048  |
-| n_vocab           | 50,257 (same tokenizer as GPT-2/3)  |
-| position encoding | [Rotary position encodings (RoPE)](https://arxiv.org/abs/2104.09864) |
-| RoPE dimensions   | [64](https://github.com/kingoflolz/mesh-transformer-jax/blob/f2aa66e0925de6593dcbb70e72399b97b4130482/mesh_transformer/layers.py#L223) |
-
-`*` each layer consists of one feedforward block and one self attention block
-
-The model consists of 28 layers with a model dimension of 4096, and a feedforward dimension of 16384. The model
-dimension is split into 16 heads, each with a dimension of 256. Rotary position encodings (RoPE) was applied to 64
-dimensions of each head. The model is trained with a tokenization vocabulary of 50257, using the same set of BPEs as
-GPT-2/GPT-3.
-
-### Zero-Shot Evaluations
-
-Models roughly sorted by performance, or by FLOPs if not available.
-
-|  Model          | Weights | Training FLOPs | LAMBADA PPL ↓ | LAMBADA Acc ↑ | Winogrande ↑ | Hellaswag ↑ | PIQA ↑ | Dataset Size (GB) |
-|-----------------|---------|----------------|---            |---            |---           |---          |---     |-------------------|
-| Chance          | ✔       | 0              | ~a lot        | ~0%           | 50%          | 25%         | 25%    | 0                 |
-| GPT-3-Ada‡      | ✘       | -----          | 9.95          | 51.6%         | 52.9%        | 43.4%       | 70.5%  | -----             |
-| GPT-2-1.5B      | ✔       | -----          | 10.63         | 51.21%        | 59.4%        | 50.9%       | 70.8%  | 40                |
-| GPTNeo-1.3B‡    | ✔       | 3.0e21         | 7.50          | 57.2%         | 55.0%        | 48.9%       | 71.1%  | 825               |
-| Megatron-2.5B*  | ✘       | 2.4e21         | -----         | 61.7%         | -----        | -----       | -----  | 174               |
-| GPTNeo-2.7B‡    | ✔       | 6.8e21         | 5.63          | 62.2%         | 56.5%        | 55.8%       | 73.0%  | 825               |
-| GPT-3-1.3B*‡    | ✘       | 2.4e21         | 5.44          | 63.6%         | 58.7%        | 54.7%       | 75.1%  | ~800              |
-| GPT-3-Babbage‡  | ✘       | -----          | 5.58          | 62.4%         | 59.0%        | 54.5%       | 75.5%  | -----             |
-| Megatron-8.3B*  | ✘       | 7.8e21         | -----         | 66.5%         | -----        | -----       | -----  | 174               |
-| GPT-3-2.7B*‡    | ✘       | 4.8e21         | 4.60          | 67.1%         | 62.3%        | 62.8%       | 75.6%  | ~800              |
-| Megatron-11B†   | ✔       | 1.0e22         | -----         | -----         | -----        | -----       | -----  | 161               |
-| **GPT-J-6B**‡   | ✔       | 1.5e22         | 3.99          | 69.7%         | 65.3%        | 66.1%       | 76.5%  | 825               |
-| GPT-3-6.7B*‡    | ✘       | 1.2e22         | 4.00          | 70.3%         | 64.5%        | 67.4%       | 78.0%  | ~800              |
-| GPT-3-Curie‡    | ✘       | -----          | 4.00          | 69.3%         | 65.6%        | 68.5%       | 77.9%  | -----             |
-| GPT-3-13B*‡     | ✘       | 2.3e22         | 3.56          | 72.5%         | 67.9%        | 70.9%       | 78.5%  | ~800              |
-| GPT-3-175B*‡    | ✘       | 3.1e23         | 3.00          | 76.2%         | 70.2%        | 78.9%       | 81.0%  | ~800              |
-| GPT-3-Davinci‡  | ✘       | -----          | 3.0           | 75%           | 72%          | 78%         | 80%    | -----             |
-| Gopher 230B*	  | ✘	    | 6.31E+23	     | -----    	 | 74.50%        | 70.10%   	| 79.20%      | 81.80% | 1344              |
-| MT-NLG 530B*‡   | ✘       | -----          | -----         | 76.6%         | 73.0%        | 80.2%       | 82.0%  | -----             |
-
-`*` represents evaluation numbers reported by their respective authors, all other numbers are provided by
-running the [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/) either with the released
-weights or with API access. Due to subtle implementation differences as well as different zero shot task framing, these
-might not be directly comparable. See [this blog post](https://www.eleuther.ai/research-log/gpt3-model-sizes/) for more
-details.
-
-`†` The Megatron-11B model provides no comparable metrics, and several implementations using the released weights do not
-reproduce the generation quality and evaluations. (see [1](https://github.com/huggingface/transformers/pull/10301)
-[2](https://github.com/pytorch/fairseq/issues/2358) [3](https://github.com/pytorch/fairseq/issues/2719))
-Thus, evaluation was not attempted.
-
-`‡` These models have been trained with data which contains possible test set contamination. The OpenAI GPT-3 models
-failed to deduplicate training data for certain test sets, while the GPT-Neo models as well as this one is
-trained on The Pile, which has not been deduplicated against any test sets.
-
-# Architecture and Usage
-
-Most scripts in this repository are designed to be run on TPUs, which under the
-[TPU-VM architecture](https://cloud.google.com/tpu/docs/system-architecture-tpu-vm) are virtual machines
-which can run arbitrary code. Most scripts are designed to spin up a TPU, SSH into it to set up the dependencies
-and copy code over from the local directory, and then start a [Ray](https://github.com/ray-project/ray.git) worker
-which can accept RPC calls.
-
-The TPUVMs handles running model training steps and evaluation, checkpoint save and loading, while the driver python
-program handles data loading and general orchestration (such as when to save checkpoints etc).
-
-This means that most scripts (`train.py`, `eval_harness.py` etc) expect to be running on a GCE virtual machine in the
-same region as the TPUs, to minimize RPC latency and data transfer cost. Other scripts
-(usually ones which don't take a `--tpu` argument, such as `device_sample.py`, `device_serve.py` or `device_train.py`)
-expect to be run directly on a TPUVM. The device_* scripts **only work on a v3-8** and not on larger pods.
-
-Furthermore, there is an example (`resharding_example.py`) of how to convert the provided checkpoints (which have 8
-shards in the case of GPT-J-6B) down to a smaller number, such as for when running on GPU(s).
-
-### Fine-tuning
-
-To fine-tune the model, run `device_train.py` on a TPU VM.  Using a TPU v3-8, you can fine-tune at a rate of ~5000
-tokens/second, which should be sufficient for small-to-medium-size datasets.
-
-Please read the [step by step guide](howto_finetune.md) for thorough fine-tuning instructions.
-
-### JAX Dependency
-
-Note this library has some specific requirements for JAX version. Specifically, to use the v1 models (including
- GPT-J 6B), `jax==0.2.12` is required. This in turn depends on `jaxlib==0.1.68`. **If this is not done, you will get
-cryptic xmap errors**
-
-However, to use the v2 model code (no publicly released weights), the newest JAX version can be used.
-# Citation
-
-To cite this repository:
-```
-@inproceedings{
-  zelikman2022star,
-  title={{ST}aR: Bootstrapping Reasoning With Reasoning},
-  author={Eric Zelikman and Yuhuai Wu and Jesse Mu and Noah Goodman},
-  booktitle={Advances in Neural Information Processing Systems},
-  editor={Alice H. Oh and Alekh Agarwal and Danielle Belgrave and Kyunghyun Cho},
-  year={2022},
-  url={https://openreview.net/forum?id=_3ELRdg2sgI}
-}
+# From this repository
+bash scripts/setup_mac.sh
+source .venv/bin/activate
+star doctor
 ```
 
-To cite the base repository:
-```
-@misc{mesh-transformer-jax,
-  author = {Wang, Ben},
-  title = {{Mesh-Transformer-JAX: Model-Parallel Implementation of Transformer Language Model with JAX}},
-  howpublished = {\url{https://github.com/kingoflolz/mesh-transformer-jax}},
-  year = 2021,
-  month = May
-}
+The installer creates `.venv`, uses the tested versions in `requirements.lock`, and performs real forward/backward computation. `device: mps` means the Apple GPU is active. Use native arm64 Python rather than a Rosetta x86 installation.
+
+Manual installation, also suitable for CPU/Linux:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+# Development and test tools
+pip install -c requirements.lock -e '.[dev]'
 ```
 
-To cite the weights of GPT-J-6B:
-```
-@misc{gpt-j,
-  author = {Wang, Ben and Komatsuzaki, Aran},
-  title = {{GPT-J-6B: A 6 Billion Parameter Autoregressive Language Model}},
-  howpublished = {\url{https://github.com/kingoflolz/mesh-transformer-jax}},
-  year = 2021,
-  month = May
-}
+## Run an offline integration check
+
+```bash
+star smoke --device mps --output-dir runs/smoke
+# CPU alternative; use a fresh output directory
+star smoke --device cpu --output-dir runs/smoke-cpu-new
 ```
 
-If you use this repository or any of the pretrained weights to do something cool, we would love to hear about it.
-Feel free to open a github issue or reach out over email (in profile).
+This creates a tiny GPT-J locally, deliberately fits it to a controlled fixture, and runs two real STaR rounds: generation, filtering, hinted recovery, training, checkpoint reload, unhinted evaluation, and resume. It downloads no model and uses no mocked generator.
 
-# TODO
-- [x] disentangle heads and shards
-- [x] test/benchmark on TPU
-- [x] implement gradient checkpointing
-- [x] fix initialization
-- [x] mixed precision
-- [x] deal with preemptible TPUs
-- [x] test and validate generation
-- [x] shard activations instead of replicating for memory efficiency (in v2)
-- [x] support ZeRO style sharding (in v2)
+**The smoke fixture intentionally overlaps training and evaluation questions. It tests integration, not reasoning generalization or paper performance.** Its `smoke_result.json` marks `fixture_only: true`. Existing outputs are never silently replaced; choose a new directory for a new run.
+
+## Run the real tasks
+
+```bash
+# Original CommonsenseQA: 32 train questions, 16 dev questions, 2 rounds
+star run --config configs/commonsenseqa.json
+
+# Original GSM data
+star run --config configs/gsm.json
+
+# Generate independent few-shot, training, and validation arithmetic problems
+star prepare-arithmetic --train-count 200 --eval-count 50 --max-digits 3
+star run --config configs/arithmetic.json
+```
+
+If `datasets/arithmetic/` already contains generated data, run the arithmetic experiment directly. The generator will not overwrite it.
+
+GPT-2 requires an approximately 0.5 GB initial weight download; subsequent runs use the Hugging Face cache. Task presets pin the model revision. Each experiment saves its own immutable base-model snapshot. Paths inside a configuration are resolved relative to that configuration file, so absolute config paths also work from other directories.
+
+A small model may generate no valid, correct rationales, particularly for GSM or multi-digit arithmetic. Such an iteration is recorded as `skipped_no_correct_examples` and retains the previous model. Reference answers are never used to fabricate successful training data. Check `trained_iterations` to see how many rounds actually trained.
+
+```bash
+# Explicit CPU execution with separate outputs
+star run --config configs/commonsenseqa.json --device cpu --output-dir runs/cpu-experiment
+
+# After the required model files have been cached
+star run --config configs/commonsenseqa.json --local-files-only --output-dir runs/offline
+
+# Continue at an iteration boundary; all other settings and data must match
+star run --config configs/commonsenseqa.json --resume --iterations 3
+```
+
+Resume replays an interrupted iteration from the beginning; it does not restore an intermediate optimizer step. Changes to learning rate, device, or sample size require a new experiment directory.
+
+## Reproduce the recorded end-to-end experiment
+
+```bash
+python scripts/run_e2e.py \
+  --device mps \
+  --output-dir runs/my-e2e \
+  --report-dir docs/experiments/my-e2e
+```
+
+This executes environment checks, the test suite, synthetic branch coverage, a real GPT-2 baseline, the full default STaR experiment, independent evaluation of the saved checkpoint, inference, resume, and an independent artifact audit. It does not cap training to one or two optimizer steps. It records a timestamped `terminal.cast`, command logs, stage durations, the exact config, source hashes, per-question results, and `result.json`.
+
+To render your own recording, install the optional video tools separately from the training runtime:
+
+```bash
+brew install ffmpeg
+python -m pip install Pillow==12.3.0
+python scripts/render_demo.py \
+  --report-dir docs/experiments/my-e2e \
+  --output docs/media/my-e2e.mp4
+```
+
+The renderer supports macOS system fonts and DejaVu fonts on Linux. It produces an MP4, a poster, a midpoint inspection frame, and JSON describing the timing transformation. The original recording retains real event timestamps.
+
+## Inference, evaluation, and fine-tuning separately
+
+```bash
+star generate --config configs/commonsenseqa.json --prompt 'Q: What is a pen used for? A:'
+
+# If this round trained successfully; summary.json contains the actual final model path
+star evaluate --config configs/commonsenseqa.json \
+  --model runs/commonsenseqa/iteration_0002/model --output-dir runs/evaluation
+
+star train --config configs/commonsenseqa.json \
+  --records runs/commonsenseqa/iteration_0001/accepted.jsonl \
+  --output-dir runs/manual-finetune
+```
+
+`train` starts from the configured base model unless `--model` overrides it. It checks that each completion's final answer matches the record's answer. The experiment-generated `accepted.jsonl` contains hint-free training prompts. `evaluate` never provides answer hints.
+
+Every command also works as `python -m star ...`. Use `--model` and `--revision` for another Hugging Face causal LM with a fast tokenizer and safetensors weights, or point to a local model directory containing weights, config, and tokenizer. A different model's capabilities and memory requirements need separate validation.
+
+## Configuration and memory
+
+Task presets contain only task-specific overrides. Shared defaults live in [`Config`](src/star/config.py). Unknown settings fail explicitly.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `device` | `auto` | MPS when available, otherwise CPU; explicit `mps` never silently falls back |
+| `max_seq_length` / `max_new_tokens` | 512 / 96 | Total context budget and generation limit; leave room for the question |
+| `generation_batch_size` / `batch_size` | 1 / 1 | Generation batch and training microbatch sizes |
+| `gradient_accumulation_steps` | 4 | Accumulated microbatches per update; the final partial group is retained |
+| `gradient_checkpointing` | true | Recompute activations to reduce training memory |
+| `few_shot` / `few_shot_train` | 3 / false | Demonstration count; omit demonstrations from training inputs by default |
+| `rationalize` / `rationalization_probability` | true / 1.0 | Retry incorrect answers with hints, at the configured sampling rate |
+| `temperature` / `top_p` | 0 / 0.9 | Greedy by default; positive temperature enables nucleus sampling |
+| `learning_rate` / `weight_decay` | 1e-5 / 0 | Constant AdamW learning rate and weight decay |
+| `epochs` / `add_epochs` | 1.0 / 0.2 | Round t uses `epochs + add_epochs × (t−1)` epochs |
+| `max_steps` / `add_steps` | null / 0 | Optional fixed optimizer-update count and per-round increment |
+| `loss_mask` | `completion` | Train on the current rationale, answer, and EOS; `all` is the unmasked control |
+| `direct` | false | Use direct-answer demonstrations as a baseline |
+| `seed` | 42 | Controls data selection, model randomness, and retry sampling |
+
+The runtime uses float32 and eager attention, with no CUDA-specific dependencies. Keep batch sizes at 1 on memory-constrained systems. Reduce context length or use a smaller model if needed. CPU and MPS execution are not guaranteed to be bitwise identical.
+
+Each trained iteration saves a complete checkpoint, in addition to the initial snapshot. Disk usage grows with the number of rounds. Keep historical checkpoints while you still need to resume that experiment.
+
+## Layout and artifacts
+
+```text
+src/star/          Algorithm, data adapters, PyTorch backend, CLI, offline fixture
+configs/           Task presets
+datasets/          Original data and demonstrations; generated arithmetic is ignored
+scripts/           Mac setup, recorded E2E runner, video renderer
+tests/             Algorithm invariants, boundary cases, real training and device tests
+docs/              Migration notes, experiment reports, and demo video
+requirements.lock  Tested dependency constraints
+runs/              Local checkpoints and experiment outputs; ignored by Git
+```
+
+An experiment contains `manifest.json`, `base_model/`, each round's `generations.jsonl`, `accepted.jsonl`, `evaluation.jsonl`, `metrics.json`, and `model/`, plus a final `summary.json`. Generation logs retain hinted inputs for inspection; accepted training prompts remove those hints. Compact report evidence and the demo are kept in the repository; model weights remain local.
+
+## Tests and attribution
+
+```bash
+pytest -q
+ruff check src tests
+ruff format --check src tests
+```
+
+Tests cover partial batches, hint removal, retry selection, fresh-base training, empty accepted sets, interrupted iteration replay, checkpoint integrity, loss masks, context limits, and MPS forward/backward computation. CI defines CPU tests and the offline integration run. See the [earlier platform validation](docs/validation.md) and the [recorded experiment report](docs/experiments/2026-11-10-e2e/report.md) for checks actually performed.
+
+Retain the [original citation](CITATION.bib) and [Apache 2.0 license](LICENSE.txt), and cite the [STaR paper](https://openreview.net/forum?id=_3ELRdg2sgI). This adaptation does not claim the original paper's evaluation results.

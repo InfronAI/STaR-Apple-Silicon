@@ -1,0 +1,12 @@
+{
+  "python": "3.11.16",
+  "machine": "arm64",
+  "macos": "26.6.1",
+  "torch": "2.8.0",
+  "transformers": "4.51.3",
+  "mps_built": true,
+  "mps_available": true,
+  "device": "mps",
+  "memory_gib": 16.0,
+  "forward_backward": "passed"
+}
