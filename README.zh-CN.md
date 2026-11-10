@@ -20,6 +20,74 @@
 
 **本次结果：**33 项测试、17 项产物检查通过；独立验证准确率从训练前的 **4/16（25%）** 变为第二轮后的 **3/16（18.75%）**。本次验证了完整流程，但没有提升该小规模子集上的准确率。完整逐轮结果和局限见实验报告。
 
+## 数据流图
+
+每轮使用当前模型真实生成的内容重新构建训练集。下图展示默认流程：对每道答错的训练题提供答案提示并重试，训练时只监督生成的 completion。筛选标准是最终答案是否正确，不会独立判定推理过程的正确性。
+
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 280, "nodeSpacing": 30, "rankSpacing": 35}}}%%
+flowchart TB
+    QUESTIONS["训练问题 + few-shot 示例"] --> GENERATE["使用当前模型<br/>生成推理过程和答案"]
+    GENERATE --> CHECK{"最终答案正确？"}
+    CHECK -->|是| ACCEPTED["汇总 accepted.jsonl<br/>无答案提示的问题 + 生成内容"]
+    CHECK -->|否| RETRY["添加答案提示后重试<br/>仍使用同一个当前模型"]
+    RETRY --> RECHECK{"最终答案正确？"}
+    RECHECK -->|是| ACCEPTED
+    RECHECK -->|否| REJECT["不纳入训练"]
+    ACCEPTED --> NONEMPTY{"有被接受的训练记录？"}
+    NONEMPTY -->|是| TRAIN["全参数微调<br/>保存本轮模型"]
+    BASE["不可变的原始基座 base_model/"] -->|每轮从原始权重重新开始| TRAIN
+    BASE -.->|第一轮生成使用| GENERATE
+    TRAIN -.->|下一轮生成使用| GENERATE
+    NONEMPTY -->|否| SKIP["跳过训练<br/>保留当前模型"]
+    TRAIN --> EVALUATE["评估本轮得到的模型<br/>不提供答案提示"]
+    SKIP --> EVALUATE
+    DEV["独立验证集问题"] --> EVALUATE
+    EVALUATE --> RESULTS["evaluation.jsonl + metrics.json<br/>最后一轮结束后写入 summary.json"]
+
+    classDef data fill:#eaf2ff,stroke:#5276a5,color:#172b4d
+    classDef model fill:#fff4d6,stroke:#aa8128,color:#49380e
+    classDef output fill:#e4f4e9,stroke:#43815b,color:#173d27
+    class QUESTIONS,DEV data
+    class BASE,TRAIN model
+    class ACCEPTED,RESULTS output
+```
+
+初次生成和提示后重试的内容均保存在 `generations.jsonl`，包括被拒绝的答案。训练输入会重新构造成不含答案提示的问题，模型生成的推理和答案仍作为训练目标。若筛选结果为空，当前模型继续用于评估及后续迭代。验证集只参与评估。
+
+## 架构流程图
+
+主入口 `star run` 将任务格式与答案检查、迭代控制、模型计算分开。生成、训练、checkpoint 保存及重载均通过同一个 PyTorch 后端完成。
+
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 280, "nodeSpacing": 30, "rankSpacing": 35}}}%%
+flowchart TB
+    PRESETS["configs/*.json"] --> CONFIG
+    DATASETS["datasets/<br/>问题、答案标签和 few-shot 示例"] --> DATA
+    MODELS["Hugging Face 模型<br/>或本地 checkpoint"] --> BACKEND
+
+    subgraph RUNTIME["本地运行时 · src/star/"]
+        CLI["cli.py<br/>star run / python -m star run"] --> CONFIG["config.py<br/>验证配置并解析路径"]
+        CONFIG --> PIPELINE["pipeline.py<br/>收集、训练、评估<br/>断点恢复与完整性检查"]
+        DATA["data.py<br/>任务适配与答案检查"] <-->|加载、解析、比较| PIPELINE
+        PIPELINE -->|模型操作| BACKEND["backend.py · TorchBackend<br/>Transformers + PyTorch"]
+    end
+
+    BACKEND -->|张量计算| DEVICE["Apple Silicon GPU / MPS<br/>或 CPU"]
+    BACKEND --> CHECKPOINTS["本地 safetensors 模型<br/>base_model/ 与 iteration_*/model/"]
+    PIPELINE --> RECORDS["runs/<br/>JSONL 记录、指标与 manifest"]
+
+    classDef input fill:#eaf2ff,stroke:#5276a5,color:#172b4d
+    classDef compute fill:#fff4d6,stroke:#aa8128,color:#49380e
+    classDef output fill:#e4f4e9,stroke:#43815b,color:#173d27
+    class PRESETS,DATASETS,MODELS input
+    class BACKEND,DEVICE compute
+    class CHECKPOINTS,RECORDS output
+    style RUNTIME fill:#f7f9fc,stroke:#9aa7ba,color:#172b4d
+```
+
+`device: auto` 在 MPS 可用时使用 MPS，否则使用 CPU；显式指定 `mps` 而设备不可用时会报错。`scripts/run_e2e.py` 调用这些 CLI 命令并记录实验证据，`scripts/render_demo.py` 将终端录制渲染为上方 Demo。实现细节见[架构说明](docs/architecture.md)。
+
 ## 安装
 
 需要 **macOS 14+、原生 arm64 Python 3.11 或 3.12**，推荐 Python 3.11。首次下载依赖和预训练模型需要网络；不需要 API key、Google Cloud、W&B 或远程 GPU。

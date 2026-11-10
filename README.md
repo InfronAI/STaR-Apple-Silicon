@@ -18,6 +18,74 @@ The experiment uses the default **32 training questions, 16 held-out validation 
 
 **Recorded result:** 33 tests and 17 artifact checks passed. Held-out accuracy was **4/16 (25%) before training and 3/16 (18.75%) after round two**. The run validates the workflow; it did not improve accuracy on this small subset. See the report for all per-round results and limitations.
 
+## Data flow
+
+Each round builds a new training set from the current model's own completions. The diagram shows the default behavior: retry every incorrect training answer with a hint, then supervise only the generated completion. A correct final answer is the acceptance criterion; the rationale is not independently graded.
+
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 280, "nodeSpacing": 30, "rankSpacing": 35}}}%%
+flowchart TB
+    QUESTIONS["Training questions + few-shot examples"] --> GENERATE["Generate rationale and answer<br/>using the current model"]
+    GENERATE --> CHECK{"Final answer correct?"}
+    CHECK -->|Yes| ACCEPTED["Collect accepted.jsonl<br/>Hint-free question + generated completion"]
+    CHECK -->|No| RETRY["Retry with an answer hint<br/>using the same current model"]
+    RETRY --> RECHECK{"Final answer correct?"}
+    RECHECK -->|Yes| ACCEPTED
+    RECHECK -->|No| REJECT["Exclude from training"]
+    ACCEPTED --> NONEMPTY{"Any accepted records?"}
+    NONEMPTY -->|Yes| TRAIN["Fine-tune all parameters<br/>Save this round's model"]
+    BASE["Immutable original base_model/"] -->|Fresh weights every round| TRAIN
+    BASE -.->|First round's generator| GENERATE
+    TRAIN -.->|Next round's generator| GENERATE
+    NONEMPTY -->|No| SKIP["Skip training<br/>Keep the current model"]
+    TRAIN --> EVALUATE["Evaluate the resulting model<br/>without answer hints"]
+    SKIP --> EVALUATE
+    DEV["Held-out dev questions"] --> EVALUATE
+    EVALUATE --> RESULTS["evaluation.jsonl + metrics.json<br/>summary.json after the last round"]
+
+    classDef data fill:#eaf2ff,stroke:#5276a5,color:#172b4d
+    classDef model fill:#fff4d6,stroke:#aa8128,color:#49380e
+    classDef output fill:#e4f4e9,stroke:#43815b,color:#173d27
+    class QUESTIONS,DEV data
+    class BASE,TRAIN model
+    class ACCEPTED,RESULTS output
+```
+
+All initial generations and hinted retries remain in `generations.jsonl`, including rejected answers. Training prompts are rebuilt without the answer hint; the model's generated rationale and answer remain the target. An empty accepted set keeps the current model for evaluation and any remaining rounds. Dev examples are used only for evaluation.
+
+## Architecture and execution
+
+The main `star run` path separates task formatting and answer checks from iteration control and model execution. The same PyTorch backend handles generation, training, checkpoint saving, and reloads.
+
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 280, "nodeSpacing": 30, "rankSpacing": 35}}}%%
+flowchart TB
+    PRESETS["configs/*.json"] --> CONFIG
+    DATASETS["datasets/<br/>Questions, labels and few-shot examples"] --> DATA
+    MODELS["Hugging Face model<br/>or local checkpoint"] --> BACKEND
+
+    subgraph RUNTIME["Local runtime · src/star/"]
+        CLI["cli.py<br/>star run / python -m star run"] --> CONFIG["config.py<br/>Validate settings and resolve paths"]
+        CONFIG --> PIPELINE["pipeline.py<br/>Collect, train and evaluate<br/>Resume and integrity checks"]
+        DATA["data.py<br/>Task adapters and answer checking"] <-->|Load / parse / compare| PIPELINE
+        PIPELINE -->|Model operations| BACKEND["backend.py · TorchBackend<br/>Transformers + PyTorch"]
+    end
+
+    BACKEND -->|Tensor execution| DEVICE["Apple Silicon GPU via MPS<br/>or CPU"]
+    BACKEND --> CHECKPOINTS["Local safetensors checkpoints<br/>base_model/ and iteration_*/model/"]
+    PIPELINE --> RECORDS["runs/<br/>JSONL records, metrics and manifest"]
+
+    classDef input fill:#eaf2ff,stroke:#5276a5,color:#172b4d
+    classDef compute fill:#fff4d6,stroke:#aa8128,color:#49380e
+    classDef output fill:#e4f4e9,stroke:#43815b,color:#173d27
+    class PRESETS,DATASETS,MODELS input
+    class BACKEND,DEVICE compute
+    class CHECKPOINTS,RECORDS output
+    style RUNTIME fill:#f7f9fc,stroke:#9aa7ba,color:#172b4d
+```
+
+`device: auto` selects MPS when available and CPU otherwise; an explicit `mps` request fails if MPS is unavailable. `scripts/run_e2e.py` drives these CLI commands and records experiment evidence; `scripts/render_demo.py` turns that terminal recording into the demo above. See the [architecture notes](docs/architecture.md) for implementation details.
+
 ## Install
 
 Use **macOS 14+, native arm64 Python 3.11 or 3.12**; Python 3.11 is recommended. Dependencies and pretrained weights need network access on their first download. No API key, cloud account, W&B account, or remote GPU is required.
